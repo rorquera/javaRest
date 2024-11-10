@@ -351,4 +351,68 @@ public class ProveedoresBDD {
 			}
 		}
 	}
+	
+	public void recibirPedido(CabeceraPedido pedido) throws KrakeDevException {
+		Connection conn = null;
+		
+		// ACTUALIZAR EL ESTADO DE LA CABECERA
+		
+		StringBuilder sb = new StringBuilder();
+		sb.append("UPDATE PUBLIC.CABECERA_PEDIDO");
+		sb.append(" SET");
+		sb.append(" ESTADO = ?");
+		sb.append(" WHERE");
+		sb.append(" NUMERO = ?");
+		String sql = sb.toString();
+		try {
+			conn = ConexionBDD.obtenerConexion();
+			PreparedStatement ps = conn.prepareStatement(sql);
+			ps.setString(1, "R");
+			ps.setInt(2, pedido.getNumero());
+
+			ps.executeUpdate();
+			
+			
+			// ACTUALIZAR CANTIDAD RECIBIDA Y SUBTOTAL DEL DETALLE
+			
+			StringBuilder sbd = new StringBuilder();
+			sbd.append("UPDATE PUBLIC.DETALLE_PEDIDO");
+			sbd.append(" SET");
+			sbd.append(" SUBTOTAL = ?,");
+			sbd.append(" CANTIDAD_RECIBIDA = ?");
+			sbd.append(" WHERE");
+			sbd.append(" CODIGO = ?");
+			
+			String sqlDet = sbd.toString();
+
+			PreparedStatement psDetalle = conn.prepareStatement(sqlDet);
+			List<DetallePedido> detalles = pedido.getDetallePedido();
+
+			for (DetallePedido detallePedido : detalles) {
+				BigDecimal precioVenta = detallePedido.getProducto().getPrecioVenta();
+				BigDecimal cantidadRecibida = new BigDecimal(detallePedido.getCantidadRecibida());
+				BigDecimal subTotal = precioVenta.multiply(cantidadRecibida);
+				psDetalle.setBigDecimal(1, subTotal);
+				psDetalle.setInt(2, detallePedido.getCantidadRecibida());
+				psDetalle.setInt(3, detallePedido.getCodigo());
+				psDetalle.executeUpdate();
+			}
+			
+			
+		} catch (SQLException e) {
+			e.printStackTrace();
+			throw new KrakeDevException("Error al recibir el pedido");
+		} catch (KrakeDevException e) {
+			e.printStackTrace();
+			throw e;
+		} finally {
+			if (conn != null) {
+				try {
+					conn.close();
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+			}
+		}
+	}
 }
