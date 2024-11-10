@@ -1,13 +1,19 @@
 package com.krakedev.inventarios.bdd;
 
+import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+
+import com.krakedev.inventarios.entidades.Categoria;
+import com.krakedev.inventarios.entidades.CategoriaUnidadMedida;
+import com.krakedev.inventarios.entidades.Producto;
 import com.krakedev.inventarios.entidades.Proveedor;
 import com.krakedev.inventarios.entidades.TipoDocumento;
+import com.krakedev.inventarios.entidades.UnidadMedida;
 import com.krakedev.inventarios.excepciones.KrakeDevException;
 import com.krakedev.inventarios.utils.ConexionBDD;
 
@@ -18,7 +24,7 @@ public class ProveedoresBDD {
 		PreparedStatement ps = null;
 		ResultSet rs = null;
 		Proveedor proveedor = null;
-		TipoDocumento tipoDocumento =new TipoDocumento();
+		TipoDocumento tipoDocumento = new TipoDocumento();
 		StringBuilder sb = new StringBuilder();
 		sb.append("SELECT");
 		sb.append("	PRO.IDENTIFICADOR,");
@@ -96,7 +102,7 @@ public class ProveedoresBDD {
 		}
 		return tipoDocumentos;
 	}
-	
+
 	public void crear(Proveedor proveedor) throws KrakeDevException {
 		Connection conn = null;
 		StringBuilder sb = new StringBuilder();
@@ -130,5 +136,88 @@ public class ProveedoresBDD {
 				}
 			}
 		}
+	}
+
+	public List<Producto> buscarProducto(String subcadena) throws KrakeDevException {
+		List<Producto> productos = new ArrayList<Producto>();
+		Connection conn = null;
+		PreparedStatement ps = null;
+		ResultSet rs = null;
+		Producto producto;
+		Categoria categoria;
+		UnidadMedida unidadMedida;
+		CategoriaUnidadMedida categoriaUnidadMedida;
+		StringBuilder sb = new StringBuilder();
+		sb.append("SELECT");
+		sb.append(" PRO.CODIGO AS CODIGO_PRODUCTO,");
+		sb.append(" PRO.NOMBRE AS NOMBRE_PRODUCTO,");
+		sb.append(" UDM.NOMBRE AS NOMBRE_UDM,");
+		sb.append(" UDM.DESCRIPCION,");
+		sb.append(" CUM.CODIGO AS CODIGO_CUM,");
+		sb.append(" CUM.NOMBRE AS NOMBRE_CUM,");
+		sb.append(" CAST(PRO.PRECIO_VENTA AS DECIMAL(6, 2)),");
+		sb.append(" PRO.TIENE_IVA,");
+		sb.append(" CAST(PRO.COSTE AS DECIMAL(5, 4)),");
+		sb.append(" CAT.CODIGO AS CODIGO_CATEGORIA,");
+		sb.append(" CAT.NOMBRE AS NOMBRE_CATEGORIA,");
+		sb.append(" PRO.STOCK");
+		sb.append(" FROM");
+		sb.append(" PRODUCTOS PRO");
+		sb.append(" INNER JOIN UNIDADES_MEDIDA UDM ON UDM.NOMBRE = PRO.UDM");
+		sb.append(" INNER JOIN CATEGORIAS CAT ON CAT.CODIGO = PRO.CATEGORIA");
+		sb.append(" INNER JOIN CATEGORIAS_UNIDAD_MEDIDA CUM ON CUM.CODIGO = UDM.CATEGORIA_UDM");
+		sb.append(" WHERE");
+		sb.append(" UPPER(PRO.NOMBRE) LIKE ?");
+		String sql = sb.toString();
+		try {
+			conn = ConexionBDD.obtenerConexion();
+			ps = conn.prepareStatement(sql);
+			ps.setString(1, "%" + subcadena.toUpperCase() + "%");
+			rs = ps.executeQuery();
+
+			while (rs.next()) {
+				int codigoProducto = rs.getInt("CODIGO_PRODUCTO");
+				String nombreProducto = rs.getString("NOMBRE_PRODUCTO");
+
+				unidadMedida = new UnidadMedida();
+				unidadMedida.setNombre(rs.getString("NOMBRE_UDM"));
+				unidadMedida.setDescripcion(rs.getString("DESCRIPCION"));
+
+				BigDecimal precioVenta = rs.getBigDecimal("PRECIO_VENTA");
+				Boolean tieneIva = rs.getBoolean("TIENE_IVA");
+				BigDecimal coste = rs.getBigDecimal("COSTE");
+
+				categoriaUnidadMedida = new CategoriaUnidadMedida();
+				categoriaUnidadMedida.setCodigo(rs.getString("CODIGO_CUM"));
+				categoriaUnidadMedida.setNombre(rs.getString("NOMBRE_CUM"));
+				unidadMedida.setCategoriaUdm(categoriaUnidadMedida);
+
+				categoria = new Categoria();
+				categoria.setCodigo(rs.getInt("CODIGO_CATEGORIA"));
+				categoria.setNombre(rs.getString("NOMBRE_CATEGORIA"));
+
+				int stock = rs.getInt("STOCK");
+
+				producto = new Producto();
+				producto.setCategoria(categoria);
+				producto.setCodigo(codigoProducto);
+				producto.setNombre(nombreProducto);
+				producto.setUdm(unidadMedida);
+				producto.setPrecioVenta(precioVenta);
+				producto.setTieneIva(tieneIva);
+				producto.setCoste(coste);
+				producto.setCategoria(categoria);
+				producto.setStock(stock);
+
+				productos.add(producto);
+			}
+		} catch (KrakeDevException e) {
+			e.printStackTrace();
+			throw e;
+		} catch (SQLException e) {
+			e.printStackTrace();
+			throw new KrakeDevException("Error al consultar. Detalle: " + e.getMessage());
+		}
+		return productos;
 	}
 }
