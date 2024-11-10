@@ -19,8 +19,22 @@ public class ProveedoresBDD {
 		PreparedStatement ps = null;
 		ResultSet rs = null;
 		Proveedor proveedor = null;
-		String sql = "SELECT" + "	IDENTIFICADOR," + "	TIPO_DOCUMENTO," + "	NOMBRE," + "	TELEFONO," + "	CORREO,"
-				+ "	DIRECCION" + " FROM PUBLIC.PROVEEDORES" + " WHERE UPPER(NOMBRE) LIKE ?";
+		TipoDocumento tipoDocumento =new TipoDocumento();
+		StringBuilder sb = new StringBuilder();
+		sb.append("SELECT");
+		sb.append("	PRO.IDENTIFICADOR,");
+		sb.append("	PRO.TIPO_DOCUMENTO,");
+		sb.append("	TD.DESCRIPCION,");
+		sb.append("	PRO.NOMBRE,");
+		sb.append("	PRO.TELEFONO,");
+		sb.append("	PRO.CORREO,");
+		sb.append("	PRO.DIRECCION");
+		sb.append(" FROM");
+		sb.append("	PUBLIC.PROVEEDORES PRO");
+		sb.append("	INNER JOIN PUBLIC.TIPO_DOCUMENTOS TD ON PRO.TIPO_DOCUMENTO = TD.CODIGO");
+		sb.append(" WHERE");
+		sb.append("	UPPER(NOMBRE) LIKE ?");
+		String sql = sb.toString();
 		try {
 			conn = ConexionBDD.obtenerConexion();
 			ps = conn.prepareStatement(sql);
@@ -29,7 +43,8 @@ public class ProveedoresBDD {
 
 			while (rs.next()) {
 				String identificador = rs.getString("identificador");
-				String tipoDocumento = rs.getString("tipo_documento");
+				tipoDocumento.setCodigo(rs.getString("tipo_documento"));
+				tipoDocumento.setDescripcion(rs.getString("descripcion"));
 				String nombre = rs.getString("nombre");
 				String telefono = rs.getString("telefono");
 				String correo = rs.getString("correo");
