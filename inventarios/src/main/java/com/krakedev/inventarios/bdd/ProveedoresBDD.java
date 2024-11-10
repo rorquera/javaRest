@@ -6,7 +6,6 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
-
 import com.krakedev.inventarios.entidades.Proveedor;
 import com.krakedev.inventarios.entidades.TipoDocumento;
 import com.krakedev.inventarios.excepciones.KrakeDevException;
@@ -96,5 +95,40 @@ public class ProveedoresBDD {
 			throw new KrakeDevException("Error al consultar. Detalle: " + e.getMessage());
 		}
 		return tipoDocumentos;
+	}
+	
+	public void crear(Proveedor proveedor) throws KrakeDevException {
+		Connection conn = null;
+		StringBuilder sb = new StringBuilder();
+		sb.append("INSERT INTO public.proveedores(");
+		sb.append(" identificador, tipo_documento, nombre, telefono, correo, direccion)");
+		sb.append(" VALUES (?, ?, ?, ?, ?, ?)");
+		String sql = sb.toString();
+		try {
+			conn = ConexionBDD.obtenerConexion();
+			PreparedStatement ps = conn.prepareStatement(sql);
+			ps.setString(1, proveedor.getIdentificador());
+			ps.setString(2, proveedor.getTipoDocumento().getCodigo());
+			ps.setString(3, proveedor.getNombre());
+			ps.setString(4, proveedor.getTelefono());
+			ps.setString(5, proveedor.getCorreo());
+			ps.setString(6, proveedor.getDireccion());
+
+			ps.executeUpdate();
+		} catch (SQLException e) {
+			e.printStackTrace();
+			throw new KrakeDevException("Error al insertar el proveedor");
+		} catch (KrakeDevException e) {
+			e.printStackTrace();
+			throw e;
+		} finally {
+			if (conn != null) {
+				try {
+					conn.close();
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+			}
+		}
 	}
 }
