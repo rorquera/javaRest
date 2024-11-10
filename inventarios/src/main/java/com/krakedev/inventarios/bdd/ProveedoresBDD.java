@@ -5,11 +5,15 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
+import com.krakedev.inventarios.entidades.CabeceraPedido;
 import com.krakedev.inventarios.entidades.Categoria;
 import com.krakedev.inventarios.entidades.CategoriaUnidadMedida;
+import com.krakedev.inventarios.entidades.DetallePedido;
 import com.krakedev.inventarios.entidades.Producto;
 import com.krakedev.inventarios.entidades.Proveedor;
 import com.krakedev.inventarios.entidades.TipoDocumento;
@@ -252,6 +256,88 @@ public class ProveedoresBDD {
 		} catch (SQLException e) {
 			e.printStackTrace();
 			throw new KrakeDevException("Error al guardar el producto");
+		} catch (KrakeDevException e) {
+			e.printStackTrace();
+			throw e;
+		} finally {
+			if (conn != null) {
+				try {
+					conn.close();
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+			}
+		}
+	}
+
+	public void crearPedido(CabeceraPedido cabeceraPedido) throws KrakeDevException {
+		Connection conn = null;
+		ResultSet rsClaves = null;
+		int codigoCabecera = 0;
+		StringBuilder sb = new StringBuilder();
+		sb.append("INSERT INTO");
+		sb.append(" PUBLIC.CABECERA_PEDIDO (PROVEEDOR, FECHA, ESTADO)");
+		sb.append(" VALUES");
+		sb.append(" (?, ?, ?)");
+
+		String sql = sb.toString();
+		
+		StringBuilder sbd = new StringBuilder();
+		sbd.append(" INSERT INTO");
+		sbd.append(" PUBLIC.DETALLE_PEDIDO (");
+		sbd.append(" CABECERA_PEDIDO,");
+		sbd.append(" PRODUCTO,");
+		sbd.append(" CANTIDAD_SOLICITADA,");
+		sbd.append(" SUBTOTAL,");
+		sbd.append(" CANTIDAD_RECIBIDA");
+		sbd.append(" )");
+		sbd.append(" VALUES");
+		sbd.append(" (?, ?, ?, ?, ?)");
+		
+		String sqlDet = sbd.toString();
+
+		try {
+			conn = ConexionBDD.obtenerConexion();
+			PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
+
+			// INSERTAR CABECERA
+
+			Date fechaActual = new Date();
+			java.sql.Date fechaSQL = new java.sql.Date(fechaActual.getTime());
+
+			ps.setString(1, cabeceraPedido.getProveedor().getIdentificador());
+			ps.setDate(2, fechaSQL);
+			ps.setString(3, "S");
+
+			ps.executeUpdate();
+
+			rsClaves = ps.getGeneratedKeys();
+			if (rsClaves.next()) {
+				codigoCabecera = rsClaves.getInt(1);
+			}
+
+			System.out.println("CODIGO GENERADO >>>> " + codigoCabecera);
+			
+			// INSERTAR DETALLES
+
+			PreparedStatement psDetalle = conn.prepareStatement(sqlDet);
+			List<DetallePedido> detalles = cabeceraPedido.getDetallePedido();
+
+			for (DetallePedido detallePedido : detalles) {
+				psDetalle.setInt(1, codigoCabecera);
+				psDetalle.setInt(2, detallePedido.getProducto().getCodigo());
+				psDetalle.setInt(3, detallePedido.getCantidadSolicitada());
+				BigDecimal precioVenta = detallePedido.getProducto().getPrecioVenta();
+				BigDecimal cantidadSolicitada = new BigDecimal(detallePedido.getCantidadSolicitada());
+				BigDecimal subTotal = precioVenta.multiply(cantidadSolicitada);
+				psDetalle.setBigDecimal(4, subTotal);
+				psDetalle.setInt(5, detallePedido.getCantidadRecibida());
+				psDetalle.executeUpdate();
+			}
+
+		} catch (SQLException e) {
+			e.printStackTrace();
+			throw new KrakeDevException("Error al guardar el pedido");
 		} catch (KrakeDevException e) {
 			e.printStackTrace();
 			throw e;

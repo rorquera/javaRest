@@ -11,7 +11,9 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+
 import com.krakedev.inventarios.bdd.ProveedoresBDD;
+import com.krakedev.inventarios.entidades.CabeceraPedido;
 import com.krakedev.inventarios.entidades.Producto;
 import com.krakedev.inventarios.entidades.Proveedor;
 import com.krakedev.inventarios.entidades.TipoDocumento;
@@ -78,7 +80,7 @@ public class ServiciosProveedores {
 			return Response.serverError().build();
 		}
 	}
-	
+
 	@Path("crearproducto")
 	@POST
 	@Consumes(MediaType.APPLICATION_JSON)
@@ -87,6 +89,21 @@ public class ServiciosProveedores {
 		ProveedoresBDD pro = new ProveedoresBDD();
 		try {
 			pro.crearProducto(producto);
+			return Response.ok().build();
+		} catch (KrakeDevException e) {
+			e.printStackTrace();
+			return Response.serverError().build();
+		}
+	}
+
+	@Path("crearpedido")
+	@POST
+	@Consumes(MediaType.APPLICATION_JSON)
+	public Response crearPedido(CabeceraPedido cabeceraPedido) {
+		System.out.println("Cabecera Pedido creada: " + cabeceraPedido);
+		ProveedoresBDD pro = new ProveedoresBDD();
+		try {
+			pro.crearPedido(cabeceraPedido);
 			return Response.ok().build();
 		} catch (KrakeDevException e) {
 			e.printStackTrace();
