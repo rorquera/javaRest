@@ -78,4 +78,20 @@ public class ServiciosProveedores {
 			return Response.serverError().build();
 		}
 	}
+	
+	@Path("crearproducto")
+	@POST
+	@Consumes(MediaType.APPLICATION_JSON)
+	public Response crear(Producto producto) {
+		System.out.println("Proveedor creado: " + producto);
+		ProveedoresBDD pro = new ProveedoresBDD();
+		try {
+			pro.crearProducto(producto);
+			return Response.ok().build();
+		} catch (KrakeDevException e) {
+			e.printStackTrace();
+			return Response.serverError().build();
+		}
+	}
+
 }

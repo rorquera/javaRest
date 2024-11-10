@@ -123,7 +123,7 @@ public class ProveedoresBDD {
 			ps.executeUpdate();
 		} catch (SQLException e) {
 			e.printStackTrace();
-			throw new KrakeDevException("Error al insertar el proveedor");
+			throw new KrakeDevException("Error al guardar el proveedor");
 		} catch (KrakeDevException e) {
 			e.printStackTrace();
 			throw e;
@@ -219,5 +219,50 @@ public class ProveedoresBDD {
 			throw new KrakeDevException("Error al consultar. Detalle: " + e.getMessage());
 		}
 		return productos;
+	}
+
+	public void crearProducto(Producto producto) throws KrakeDevException {
+		Connection conn = null;
+		StringBuilder sb = new StringBuilder();
+		sb.append("INSERT INTO");
+		sb.append(" PUBLIC.PRODUCTOS (");
+		sb.append(" NOMBRE,");
+		sb.append(" UDM,");
+		sb.append(" PRECIO_VENTA,");
+		sb.append(" TIENE_IVA,");
+		sb.append(" COSTE,");
+		sb.append(" CATEGORIA,");
+		sb.append(" STOCK");
+		sb.append(" )");
+		sb.append(" VALUES");
+		sb.append(" (?, ?, ?, ?, ?, ?, ?)");
+		String sql = sb.toString();
+		try {
+			conn = ConexionBDD.obtenerConexion();
+			PreparedStatement ps = conn.prepareStatement(sql);
+			ps.setString(1, producto.getNombre());
+			ps.setString(2, producto.getUdm().getNombre());
+			ps.setBigDecimal(3, producto.getPrecioVenta());
+			ps.setBoolean(4, producto.getTieneIva());
+			ps.setBigDecimal(5, producto.getCoste());
+			ps.setInt(6, producto.getCategoria().getCodigo());
+			ps.setInt(7, producto.getStock());
+
+			ps.executeUpdate();
+		} catch (SQLException e) {
+			e.printStackTrace();
+			throw new KrakeDevException("Error al guardar el producto");
+		} catch (KrakeDevException e) {
+			e.printStackTrace();
+			throw e;
+		} finally {
+			if (conn != null) {
+				try {
+					conn.close();
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+			}
+		}
 	}
 }
