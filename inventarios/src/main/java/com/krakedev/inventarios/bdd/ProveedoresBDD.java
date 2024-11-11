@@ -6,6 +6,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -281,7 +282,7 @@ public class ProveedoresBDD {
 		sb.append(" (?, ?, ?)");
 
 		String sql = sb.toString();
-		
+
 		StringBuilder sbd = new StringBuilder();
 		sbd.append(" INSERT INTO");
 		sbd.append(" PUBLIC.DETALLE_PEDIDO (");
@@ -293,7 +294,7 @@ public class ProveedoresBDD {
 		sbd.append(" )");
 		sbd.append(" VALUES");
 		sbd.append(" (?, ?, ?, ?, ?)");
-		
+
 		String sqlDet = sbd.toString();
 
 		try {
@@ -317,7 +318,7 @@ public class ProveedoresBDD {
 			}
 
 			System.out.println("CODIGO GENERADO >>>> " + codigoCabecera);
-			
+
 			// INSERTAR DETALLES
 
 			PreparedStatement psDetalle = conn.prepareStatement(sqlDet);
@@ -351,12 +352,12 @@ public class ProveedoresBDD {
 			}
 		}
 	}
-	
+
 	public void recibirPedido(CabeceraPedido pedido) throws KrakeDevException {
 		Connection conn = null;
-		
+
 		// ACTUALIZAR EL ESTADO DE LA CABECERA
-		
+
 		StringBuilder sb = new StringBuilder();
 		sb.append("UPDATE PUBLIC.CABECERA_PEDIDO");
 		sb.append(" SET");
@@ -371,10 +372,9 @@ public class ProveedoresBDD {
 			ps.setInt(2, pedido.getNumero());
 
 			ps.executeUpdate();
-			
-			
+
 			// ACTUALIZAR CANTIDAD RECIBIDA Y SUBTOTAL DEL DETALLE
-			
+
 			StringBuilder sbd = new StringBuilder();
 			sbd.append("UPDATE PUBLIC.DETALLE_PEDIDO");
 			sbd.append(" SET");
@@ -382,7 +382,7 @@ public class ProveedoresBDD {
 			sbd.append(" CANTIDAD_RECIBIDA = ?");
 			sbd.append(" WHERE");
 			sbd.append(" CODIGO = ?");
-			
+
 			String sqlDet = sbd.toString();
 
 			PreparedStatement psDetalle = conn.prepareStatement(sqlDet);
@@ -396,12 +396,51 @@ public class ProveedoresBDD {
 				psDetalle.setInt(2, detallePedido.getCantidadRecibida());
 				psDetalle.setInt(3, detallePedido.getCodigo());
 				psDetalle.executeUpdate();
+
+				// GUARDA EL HISTORIAL DE STOCK
+				generarHistorialStock(detallePedido);
 			}
-			
-			
+
 		} catch (SQLException e) {
 			e.printStackTrace();
 			throw new KrakeDevException("Error al recibir el pedido");
+		} catch (KrakeDevException e) {
+			e.printStackTrace();
+			throw e;
+		} finally {
+			if (conn != null) {
+				try {
+					conn.close();
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+			}
+		}
+	}
+
+	private void generarHistorialStock(DetallePedido detallePedido) throws KrakeDevException {
+		Connection conn = null;
+		StringBuilder sb = new StringBuilder();
+		sb.append("INSERT INTO");
+		sb.append(" PUBLIC.HISTORIAL_STOCK (FECHA, REFERENCIA, PRODUCTO, CANTIDAD)");
+		sb.append(" VALUES");
+		sb.append(" (?, ?, ?, ?)");
+		String sql = sb.toString();
+		try {
+			conn = ConexionBDD.obtenerConexion();
+			PreparedStatement ps = conn.prepareStatement(sql);
+			Date fechaActual = new Date();
+			Timestamp timestamp = new Timestamp(fechaActual.getTime());
+
+			ps.setTimestamp(1, timestamp);
+			ps.setString(2, "PEDIDO " + detallePedido.getCodigo());
+			ps.setInt(3, detallePedido.getProducto().getCodigo());
+			ps.setInt(4, detallePedido.getCantidadRecibida());
+			ps.executeUpdate();
+
+		} catch (SQLException e) {
+			e.printStackTrace();
+			throw new KrakeDevException("Error al guardar el producto");
 		} catch (KrakeDevException e) {
 			e.printStackTrace();
 			throw e;
