@@ -440,7 +440,7 @@ public class ProveedoresBDD {
 
 		} catch (SQLException e) {
 			e.printStackTrace();
-			throw new KrakeDevException("Error al guardar el producto");
+			throw new KrakeDevException("Error al guardar el historial de stock");
 		} catch (KrakeDevException e) {
 			e.printStackTrace();
 			throw e;
