@@ -133,9 +133,9 @@ public class VentasBDD {
 			for (DetalleVenta detalleVenta : detalles) {
 				if (detalleVenta.getProducto().getTieneIva()) {
 					iva = iva.add(new BigDecimal(1.12));
-				} else {
-					totalSinIva = totalSinIva.add(detalleVenta.getPrecioVenta());
 				}
+
+				totalSinIva = totalSinIva.add(detalleVenta.getProducto().getPrecioVenta());
 			}
 			total = totalSinIva.add(iva);
 
