@@ -454,4 +454,54 @@ public class ProveedoresBDD {
 			}
 		}
 	}
+
+	public Proveedor buscarProveedor(String identificadorProveedor) throws KrakeDevException {
+		Connection conn = null;
+		PreparedStatement ps = null;
+		ResultSet rs = null;
+		Proveedor proveedor = null;
+		TipoDocumento tipoDocumento = new TipoDocumento();
+		StringBuilder sb = new StringBuilder();
+		sb.append("SELECT");
+		sb.append("	PRO.IDENTIFICADOR,");
+		sb.append("	PRO.TIPO_DOCUMENTO,");
+		sb.append("	PRO.NOMBRE,");
+		sb.append("	PRO.TELEFONO,");
+		sb.append("	PRO.CORREO,");
+		sb.append("	PRO.DIRECCION");
+		sb.append(" FROM");
+		sb.append("	PUBLIC.PROVEEDORES PRO");
+		sb.append(" WHERE");
+		sb.append("	PRO.IDENTIFICADOR = ?");
+		String sql = sb.toString();
+		try {
+			conn = ConexionBDD.obtenerConexion();
+			ps = conn.prepareStatement(sql);
+			ps.setString(1, identificadorProveedor);
+			rs = ps.executeQuery();
+
+			while (rs.next()) {
+				String identificador = rs.getString("identificador");
+				tipoDocumento.setCodigo(rs.getString("tipo_documento"));
+				String nombre = rs.getString("nombre");
+				String telefono = rs.getString("telefono");
+				String correo = rs.getString("correo");
+				String direccion = rs.getString("direccion");
+				proveedor = new Proveedor();
+				proveedor.setIdentificador(identificador);
+				proveedor.setTipoDocumento(tipoDocumento);
+				proveedor.setNombre(nombre);
+				proveedor.setTelefono(telefono);
+				proveedor.setCorreo(correo);
+				proveedor.setDireccion(direccion);
+			}
+		} catch (KrakeDevException e) {
+			e.printStackTrace();
+			throw e;
+		} catch (SQLException e) {
+			e.printStackTrace();
+			throw new KrakeDevException("Error al consultar el proveedor: " + e.getMessage());
+		}
+		return proveedor;
+	}
 }

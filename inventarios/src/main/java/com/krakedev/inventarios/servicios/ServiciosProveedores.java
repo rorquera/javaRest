@@ -111,7 +111,7 @@ public class ServiciosProveedores {
 			return Response.serverError().build();
 		}
 	}
-	
+
 	@Path("recibirpedido")
 	@PUT
 	@Consumes(MediaType.APPLICATION_JSON)
@@ -121,6 +121,21 @@ public class ServiciosProveedores {
 		try {
 			cli.recibirPedido(pedido);
 			return Response.ok().build();
+		} catch (KrakeDevException e) {
+			e.printStackTrace();
+			return Response.serverError().build();
+		}
+	}
+
+	@Path("buscarproveedor/{identificador}")
+	@GET
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response buscarProveedor(@PathParam("identificador") String identificador) {
+		ProveedoresBDD pro = new ProveedoresBDD();
+		Proveedor proveedor = new Proveedor();
+		try {
+			proveedor = pro.buscarProveedor(identificador);
+			return Response.ok(proveedor).build();
 		} catch (KrakeDevException e) {
 			e.printStackTrace();
 			return Response.serverError().build();
