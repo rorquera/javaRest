@@ -18,7 +18,7 @@ public class ServicioProducto {
 	@Path("actualizar")
 	@PUT
 	@Consumes(MediaType.APPLICATION_JSON)
-	public Response crear(Producto producto) {
+	public Response actualizar(Producto producto) {
 		System.out.println("Producto creado: " + producto);
 		ProductoBDD productoBdd = new ProductoBDD();
 		try {
