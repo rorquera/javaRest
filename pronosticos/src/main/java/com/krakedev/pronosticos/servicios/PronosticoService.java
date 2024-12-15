@@ -3,7 +3,9 @@ package com.krakedev.pronosticos.servicios;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
+import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
@@ -25,6 +27,21 @@ public class PronosticoService {
 		try {
 			pronosticos = pronosticoBDD.buscar(identificador);
 			return Response.ok(pronosticos).build();
+		} catch (KrakeDevException e) {
+			e.printStackTrace();
+			return Response.serverError().build();
+		}
+	}
+	
+	@Path("crear")
+	@POST
+	@Consumes(MediaType.APPLICATION_JSON)
+	public Response crear(Pronostico pronostico) {
+		System.out.println("Pronostico creada: " + pronostico);
+		PronosticoBDD pronosticoBdd = new PronosticoBDD();
+		try {
+			pronosticoBdd.ingresarPronostico(pronostico);
+			return Response.ok().build();
 		} catch (KrakeDevException e) {
 			e.printStackTrace();
 			return Response.serverError().build();

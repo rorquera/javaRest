@@ -69,4 +69,41 @@ public class PronosticoBDD {
 		}
 		return pronosticos;
 	}
+
+	public void ingresarPronostico(Pronostico pronostico) throws KrakeDevException {
+		Connection conn = null;
+		StringBuilder sb = new StringBuilder();
+		sb.append("INSERT INTO public.t_pronostico(");
+		sb.append(" usuario, partido, equipo_a, equipo_b, marcador_eq_a, marcador_eq_b)");
+		sb.append(" VALUES (?, ?, ?, ?, ?, ?)");
+		String sql = sb.toString();
+		try {
+			conn = ConexionBDD.obtenerConexion();
+			PreparedStatement ps = conn.prepareStatement(sql);
+
+			ps.setString(1, pronostico.getUsuario().getCedula());
+			ps.setInt(2, pronostico.getPartido().getId());
+			ps.setString(3, pronostico.getEquipoA().getCodigo());
+			ps.setString(4, pronostico.getEquipoB().getCodigo());
+			ps.setInt(5, pronostico.getMarcadorEqA());
+			ps.setInt(6, pronostico.getMarcadorEqB());
+
+			ps.executeUpdate();
+
+		} catch (SQLException e) {
+			e.printStackTrace();
+			throw new KrakeDevException("Error al guardar el pronostico");
+		} catch (KrakeDevException e) {
+			e.printStackTrace();
+			throw e;
+		} finally {
+			if (conn != null) {
+				try {
+					conn.close();
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+			}
+		}
+	}
 }
